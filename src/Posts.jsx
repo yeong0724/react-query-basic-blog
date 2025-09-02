@@ -1,12 +1,12 @@
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { fetchPosts, deletePost, updatePost } from "@/api";
 import { PostDetail } from "@/PostDetail";
-import { useQuery } from "@tanstack/react-query";
 
 const maxPostPage = 10;
 
 export function Posts() {
-  const [currentPage, setCurrentPage] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
   const [selectedPost, setSelectedPost] = useState(null);
 
   /**
@@ -18,8 +18,8 @@ export function Posts() {
    *  - Stale 상태에서 캐시데이터가 있다면 Fetching 하는 동안 캐시데이터를 화면에 출력한다.
    */
   const { data, isError, error, isLoading } = useQuery({
-    queryKey: ["posts"],
-    queryFn: fetchPosts,
+    queryKey: ["posts", currentPage],
+    queryFn: () => fetchPosts(currentPage),
     staleTime: 2 * 1000, //
     // gcTime: 2000, // 캐시 유효 시간
   });
@@ -31,6 +31,14 @@ export function Posts() {
   if (isError) {
     return <h3>{error.toString()}</h3>;
   }
+
+  const goToPrevPage = () => {
+    setCurrentPage((prev) => prev - 1);
+  };
+
+  const goToNextPage = () => {
+    setCurrentPage((prev) => prev + 1);
+  };
 
   return (
     <>
@@ -46,11 +54,11 @@ export function Posts() {
         ))}
       </ul>
       <div className="pages">
-        <button disabled onClick={() => {}}>
+        <button disabled={currentPage <= 1} onClick={goToPrevPage}>
           Previous page
         </button>
-        <span>Page {currentPage + 1}</span>
-        <button disabled onClick={() => {}}>
+        <span>Page {currentPage}</span>
+        <button disabled={currentPage >= maxPostPage} onClick={goToNextPage}>
           Next page
         </button>
       </div>
