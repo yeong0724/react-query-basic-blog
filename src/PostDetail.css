@@ -15,3 +15,11 @@
 .success {
   color: green;
 }
+
+.delete-btn {
+  margin-right: 10px;
+}
+
+.flex {
+  display: flex;
+}
