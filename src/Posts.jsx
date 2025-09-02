@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { fetchPosts, deletePost, updatePost } from "@/api";
 import { PostDetail } from "@/PostDetail";
 
@@ -8,6 +8,22 @@ const maxPostPage = 10;
 export function Posts() {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedPost, setSelectedPost] = useState(null);
+
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    if (currentPage < maxPostPage) {
+      const nextPage = currentPage + 1;
+      /**
+       * 기본적으로 stale 상태로 설정되어 있으며, 데이터가 stale 상태일 때 캐시데이터를 화면에 출력한다.
+       * 때문에 현재 페이지에서 다음 페이지로 넘어갈때 사용자는 캐시된 데이터를 보기 때문에 로딩화면을 보지 않아도 된다. (사용자 경험 향상)
+       */
+      queryClient.prefetchQuery({
+        queryKey: ["posts", nextPage],
+        queryFn: () => fetchPosts(nextPage),
+      });
+    }
+  }, [currentPage, queryClient]);
 
   /**
    * StaleTime vs gcTime(Garbage Collection)
@@ -24,6 +40,10 @@ export function Posts() {
     // gcTime: 2000, // 캐시 유효 시간
   });
 
+  /**
+   * isLoading
+   * - 실제로 캐시된 데이터가 없고 데이터를 가져오고 있는 상태
+   */
   if (isLoading) {
     return <h3>Loading...</h3>;
   }
